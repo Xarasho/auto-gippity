@@ -12,7 +12,7 @@ pub enum PrintCommand {
 }
 
 impl PrintCommand {
-  pub fn print_agent_message(&self, agent_position: &str, agent_statement: &str) {
+  pub fn print_agent_message(&self, agent_pos: &str, agent_statement: &str) {
     let mut stdout: std::io::Stdout = stdout();
 
     // Decide on the print color
@@ -24,7 +24,7 @@ impl PrintCommand {
 
     // Print the agent statement in a specific color
     stdout.execute(SetForegroundColor(Color::Green)).unwrap();
-    print!("Agent: {}: ", agent_position);
+    print!("Agent: {}: ", agent_pos);
     
     // Make selected color
     stdout.execute(SetForegroundColor(statement_color)).unwrap();

@@ -1,4 +1,8 @@
+use crate::ai_functions::aifunc_managing::convert_user_input_to_goal;
+use crate::apis::call_request::call_gpt;
 use crate::models::general::llm::Message;
+use crate::helpers::command_line::PrintCommand;
+use serde::de::DeserializeOwned;
 
 // Extend ai function to encourage specific output
 pub fn extend_ai_function(ai_func: fn(&str) -> &'static str, func_input: &str) -> Message {
@@ -21,6 +25,48 @@ pub fn extend_ai_function(ai_func: fn(&str) -> &'static str, func_input: &str) -
   }
 }
 
+// Performs call to LLM GPT
+pub async fn ai_task_request(
+  msg_context: String,
+  agent_position: &str,
+  agent_operation: &str,
+  function_pass: for<'a> fn(&'a str) -> &'static str,
+) -> String {
+
+  // Extend ai function
+  let extended_msg: Message = extend_ai_function(function_pass, &msg_context);
+
+  // Print current status
+  PrintCommand::AICall.print_agent_message(agent_position, agent_operation);
+
+  // Get LLM response
+  let llm_response_res: Result<String, Box<dyn std::error::Error + Send + 'static>> = 
+    call_gpt(vec![extended_msg.clone()]).await;
+
+  // Return success or try again
+  match llm_response_res {
+    Ok(llm_resp) => llm_resp,
+    Err(_) => call_gpt(vec![extended_msg.clone()])
+      .await
+      .expect("Failed twice to call OpenAI")
+  }
+}
+
+// Performs call to LLM GPT - DECODED
+pub async fn ai_task_request_decoded<T: DeserializeOwned>(
+  msg_context: String,
+  agent_position: &str,
+  agent_operation: &str,
+  function_pass: for<'a> fn(&'a str) -> &'static str,
+) -> T {
+  let llm_response: String = ai_task_request(msg_context, agent_position, agent_operation, function_pass).await;
+
+  let decoded_response: T = serde_json::from_str(llm_response.as_str())
+    .expect("Failed to decode ai response from serde_json");
+
+  return decoded_response;
+}
+
 
 #[cfg(test)]
 mod tests {
@@ -37,4 +83,21 @@ mod tests {
     dbg!(&extended_msg);
     assert_eq!(extended_msg.role, "system".to_string());  
   }
+}
+
+// Every time you run this test, it's costing money 
+#[tokio::test]
+async fn tests_ai_task_request() {
+
+  let ai_func_param: String  = "Build me a webserver for making stock price api requests".to_string();
+
+  let res: String = ai_task_request(
+    ai_func_param, 
+    "Manging Agent", 
+    "Defining user requirements", 
+    convert_user_input_to_goal
+  ).await;
+
+  // dbg!(res);
+  assert!(res.len() > 20);
 }
