@@ -1,4 +1,4 @@
-use serde::{ Serialize, Deserialize };
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Clone)]
 pub struct Message {
@@ -7,23 +7,23 @@ pub struct Message {
 }
 
 #[derive(Debug, Serialize, Clone)]
-pub struct ChatCompletion  {
+pub struct ChatCompletion {
     pub model: String,
     pub messages: Vec<Message>,
     pub temperature: f32,
 }
 
 #[derive(Debug, Deserialize)]
-pub struct APIMessage  {
+pub struct APIMessage {
     pub content: String,
 }
 
 #[derive(Debug, Deserialize)]
-pub struct APIChoice  {
+pub struct APIChoice {
     pub message: APIMessage,
 }
 
 #[derive(Debug, Deserialize)]
-pub struct APIResponse  {
+pub struct APIResponse {
     pub choices: Vec<APIChoice>,
 }
