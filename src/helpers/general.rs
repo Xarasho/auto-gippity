@@ -2,6 +2,7 @@ use crate::ai_functions::aifunc_managing::convert_user_input_to_goal;
 use crate::apis::call_request::call_gpt;
 use crate::models::general::llm::Message;
 use crate::helpers::command_line::PrintCommand;
+use reqwest::Client;
 use serde::de::DeserializeOwned;
 
 // Extend ai function to encourage specific output
@@ -66,6 +67,12 @@ pub async fn ai_task_request_decoded<T: DeserializeOwned>(
 
   return decoded_response;
 }
+
+// Checkwheter request url is valid
+pub async fn check_status_code(client: &Client, url: &str) -> Result<u16, reqwest::Error> {
+  let response: reqwest::Response = client.get(url).send().await?;
+  Ok(response.status().as_u16())
+} 
 
 
 #[cfg(test)]
